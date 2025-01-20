@@ -18,8 +18,8 @@ namespace MischievousPlushies.PlushCode
         private static InteractTrigger lightSwitch { get; set; } = null!;
         private static float checkAFK_timer = 30f, checkAFK_timerMax = 30f;
         private static PlayerControllerB[] Players { get; set; } = null!;
-        private static Dictionary<PlayerControllerB, Vector3> playerRots { get; set; } = null!;
-        private static List<PlayerControllerB> afkPlayers { get; set; } = null!;
+        private static Dictionary<PlayerControllerB, Vector3> PlayerRots { get; set; } = null!;
+        private static List<PlayerControllerB> AfkPlayers { get; set; } = null!;
 
         private void Awake()
         {
@@ -28,12 +28,12 @@ namespace MischievousPlushies.PlushCode
             {
                 shipLights = GameObject.FindFirstObjectByType<ShipLights>();
                 lightSwitch = GameObject.Find("LightSwitchContainer").GetComponentInChildren<InteractTrigger>();
-                afkPlayers = new List<PlayerControllerB>();
-                playerRots = new Dictionary<PlayerControllerB, Vector3>();
+                AfkPlayers = new List<PlayerControllerB>();
+                PlayerRots = new Dictionary<PlayerControllerB, Vector3>();
                 Players = StartOfRound.Instance.allPlayerScripts;
                 foreach (var player in Players)
                 {
-                    playerRots.Add(player, player.transform.rotation.eulerAngles);
+                    PlayerRots.Add(player, player.transform.rotation.eulerAngles);
                 }
             }
         }
@@ -55,24 +55,24 @@ namespace MischievousPlushies.PlushCode
             if (StartOfRound.Instance.inShipPhase) return;
             if (plushObj.isInShipRoom)
             {
-                MischievousPlushies.Logger.LogInfo("Looking for AFK players...");
+                //MischievousPlushies.Logger.LogInfo("Looking for AFK players...");
                 foreach (var player in Players)
                 {
                     if (isPlayerAFK(player))
                     {
-                        if (afkPlayers.Contains(player))
+                        if (AfkPlayers.Contains(player))
                         {
                             if (!isActivePlayerOnShip)
                             {
-                                MischievousPlushies.Logger.LogInfo("xˬx target locked xˬx");
+                                //MischievousPlushies.Logger.LogInfo("xˬx target locked xˬx");
                                 StartCoroutine(TeleportPlayerSequence(player));
                             }
-                            afkPlayers.Clear();
+                            AfkPlayers.Clear();
                         }
-                        else afkPlayers.Add(player);
+                        else AfkPlayers.Add(player);
                     }
-                    else if (afkPlayers.Contains(player)) afkPlayers.Remove(player);
-                    playerRots[player] = player.transform.rotation.eulerAngles;
+                    else if (AfkPlayers.Contains(player)) AfkPlayers.Remove(player);
+                    PlayerRots[player] = player.transform.rotation.eulerAngles;
                 }
             }
         }
@@ -90,7 +90,7 @@ namespace MischievousPlushies.PlushCode
             }
             if (player.isInHangarShipRoom)
             {
-                float deltaRot = (playerRots[player] - player.transform.rotation.eulerAngles).magnitude;
+                float deltaRot = (PlayerRots[player] - player.transform.rotation.eulerAngles).magnitude;
                 if (player.timeSincePlayerMoving > checkAFK_timerMax)
                 {
                     if (deltaRot < 0.5f)

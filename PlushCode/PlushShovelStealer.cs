@@ -10,7 +10,7 @@ namespace MischievousPlushies.PlushCode
     {
         private GrabbableObject plushObj { get; set; } = null!;
         private static bool isHost => RoundManager.Instance.NetworkManager.IsHost;
-        private void Awake()
+        private void Start()
         {
             plushObj = GetComponent<GrabbableObject>();
             if (isHost)

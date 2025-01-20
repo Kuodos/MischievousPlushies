@@ -1,9 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using HarmonyLib;
-using Unity.Mathematics;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -11,49 +6,74 @@ namespace MischievousPlushies.PlushCode
 {
     public class PlushCosplayer : MonoBehaviour
     {
-        private GrabbableObject plushObj { get; set; } = null!;
-        private List<GrabbableObject> plushiesList { get; set; } = null!;
-        public static List<Item> plushieAllowList { get; set; } = null!;
-        public static List<GrabbableObject> convertedPlushies { get; set; } = null!;
+        private GrabbableObject PlushObj { get; set; } = null!;
+        private static List<GrabbableObject> PlushiesList { get; set; } = null!;
+        public static List<Item> PlushieAllowList { get; set; } = null!;
+        public static List<GrabbableObject> ConvertedPlushies { get; set; } = null!;
         private static bool isHost => RoundManager.Instance.NetworkManager.IsHost;
         private static float cosplayTimer = 120f, cosplayTimerMax = 60f;
         private static float cosplayRange = 5f;
-        private static bool cosplayAnywhere = true;
-        private void Awake()
+        private static bool cosplayAnywhere = true, ignoreAllowList = true;
+        private void Start()
         {
-            plushObj = GetComponent<GrabbableObject>();
-            plushiesList = new List<GrabbableObject>();
-            convertedPlushies ??= new List<GrabbableObject>();
-            plushieAllowList ??= new List<Item>();
+            PlushObj = GetComponent<GrabbableObject>();
+            PlushiesList = new List<GrabbableObject>();
+            ConvertedPlushies ??= new List<GrabbableObject>();
+            PlushieAllowList ??= new List<Item>();
             if (isHost)
             {
-                convertedPlushies.Add(plushObj);
+                ConvertedPlushies.Add(PlushObj);
                 UpdatePlushList();
             }
+            else{
+                PlushNetworker.Instance.RequestCosplayerListServerRPC(NetworkManager.Singleton.LocalClientId);
+            }
+            StartOfRound.Instance.StartNewRoundEvent.AddListener(MassConvert);
         }
-        void UpdatePlushList()
+        void OnDestroy(){
+            StartOfRound.Instance.StartNewRoundEvent.RemoveListener(MassConvert);
+        }
+        public static void SetConvertedPlushies(ulong[] Cosplayers){
+            ConvertedPlushies.Clear();
+            foreach(ulong id in Cosplayers){
+                ConvertedPlushies.Add(NetworkManager.Singleton.SpawnManager.SpawnedObjects[id].transform.GetComponent<GrabbableObject>());
+            }
+            FindAnyObjectByType<PlushCosplayer>().MassConvert();
+        }
+        public void MassConvert(){
+            PruneConvertedList();
+            foreach(GrabbableObject obj in ConvertedPlushies){
+                PlushConvert(obj);
+            }
+        }
+        public static void UpdatePlushList()
         {
             GrabbableObject[] plushies = FindObjectsByType<GrabbableObject>(FindObjectsSortMode.None);
             foreach (GrabbableObject obj in plushies)
             {
-                if (obj.itemProperties.itemName.ToLower().Contains("plush"))
+                if (obj.itemProperties.itemName.ToLower().Contains("plush")||obj.itemProperties.itemName.ToLower().Contains("fumo"))
                 {
-                    if (!convertedPlushies.Contains(obj)&&!plushiesList.Contains(obj))
+                    if (!ConvertedPlushies.Contains(obj) && !PlushiesList.Contains(obj))
                     {
-                        if(plushieAllowList.Contains(obj.itemProperties)){
-                            plushiesList.Add(obj);
+                        if (PlushieAllowList.Contains(obj.itemProperties) || ignoreAllowList)
+                        {
+                            PlushiesList.Add(obj);
                         }
                     }
                 }
             }
-           /* foreach (GrabbableObject obj in plushiesList){
-                MischievousPlushies.Logger.LogInfo("Plushie found: " + obj.name);
-            }*/
+            PruneConvertedList();
+            /* foreach (GrabbableObject obj in PlushiesList){
+                 MischievousPlushies.Logger.LogInfo("Plushie found: " + obj.name);
+             }*/
+        }
+        public static void PruneConvertedList(){
+            ConvertedPlushies.RemoveAll(plush=>plush==null);
         }
         private void Update()
         {
             if (!isHost) return;
-            if (plushObj.isInShipRoom || cosplayAnywhere)
+            if (PlushObj.isInShipRoom || cosplayAnywhere)
             {
                 cosplayTimer -= Time.deltaTime;
                 if (cosplayTimer < 0)
@@ -62,67 +82,65 @@ namespace MischievousPlushies.PlushCode
                     cosplayTimer = cosplayTimerMax;
                     GrabbableObject? plush = null;
                     float dist = cosplayRange;
-
-                    if(plushiesList.Count==0) return;
-                    foreach (GrabbableObject obj in plushiesList)
+                    if (PlushiesList.Count == 0) return;
+                    foreach (GrabbableObject obj in PlushiesList)
                     {
-                        //MischievousPlushies.Logger.LogInfo("Evaluating: "+obj.name);
                         if (obj.isInShipRoom || cosplayAnywhere)
                         {
-                            //MischievousPlushies.Logger.LogInfo((obj.transform.position - plushObj.transform.position).magnitude);
-                            if ((obj.transform.position - plushObj.transform.position).magnitude < dist)
+                            float newDist = (obj.transform.position - PlushObj.transform.position).magnitude;
+                            if (newDist < dist)
                             {
-                                dist = (obj.transform.position - plushObj.transform.position).magnitude;
+                                dist = newDist;
                                 plush = obj;
                             }
                         }
                     }
-                    if (plush != null && (dist < cosplayRange))
+                    //MischievousPlushies.Logger.LogInfo("final: " + plush);
+                   // MischievousPlushies.Logger.LogInfo("plushNet: " + (PlushNetworker.Instance!=null?"operational":"broke"));
+                    if (plush != null)
                     {
-                        if(PlushNetworker.Instance==null) return;
-                        convertedPlushies.Add(plush);
-                        plushiesList.Remove(plush);
-                        ulong targetID = plush.gameObject.GetComponent<NetworkObject>().NetworkObjectId;
-                        MischievousPlushies.Logger.LogInfo(targetID);
-                        MischievousPlushies.Logger.LogInfo(NetworkManager.Singleton.SpawnManager.SpawnedObjects[targetID]);
-                        PlushNetworker.Instance.ConvertClientRPC(this.gameObject.GetComponent<NetworkObject>().NetworkObjectId,targetID);
-                      //  MischievousPlushies.Logger.LogInfo("Sent RPC!");
-                    }
-                    else {
-                        //MischievousPlushies.Logger.LogInfo("No convertees nearby :(");
+                        if (PlushNetworker.Instance == null) return;
+                        ConvertedPlushies.Add(plush);
+                        PlushiesList.Remove(plush);
+                        ulong targetID = plush.NetworkObjectId;
+                        //MischievousPlushies.Logger.LogInfo(targetID + "converted");
+                        PlushNetworker.Instance.CosplayClientRPC(PlushObj.NetworkObjectId, targetID);
                     }
                 }
             }
         }
-        
+
         public void PlushConvert(GrabbableObject obj)
         {
-            MeshRenderer renderer;
             MeshFilter filter;
-            if(obj.mainObjectRenderer != null){
-                renderer=obj.mainObjectRenderer;
-                filter=obj.mainObjectRenderer.transform.GetComponent<MeshFilter>();
+            if (obj.mainObjectRenderer != null)
+            {
+                filter = obj.mainObjectRenderer.transform.GetComponent<MeshFilter>();
             }
-            else{
-                renderer = obj.GetComponent<MeshRenderer>();
+            else
+            {
                 filter = obj.GetComponent<MeshFilter>();
             }
-            float size = filter.mesh.bounds.size.y;
-            float sizeOrig = plushObj.GetComponent<MeshFilter>().mesh.bounds.size.y;
+            float sizeObj = filter.mesh.bounds.size.y*filter.transform.lossyScale.y;
+            float sizePlush = PlushObj.GetComponent<MeshFilter>().mesh.bounds.size.y*PlushObj.GetComponent<MeshFilter>().transform.lossyScale.y;
 
-            //MischievousPlushies.Logger.LogInfo("size1: " +size + "size2: "+sizeOrig);
-            //MischievousPlushies.Logger.LogInfo("loss1: " +filter.transform.lossyScale + "size2: "+plushObj.transform.lossyScale);
-            renderer.materials=plushObj.GetComponent<MeshRenderer>().materials;
-            filter.mesh=plushObj.GetComponent<MeshFilter>().mesh;
-            filter.transform.localScale = transform.localScale*sizeOrig/size;
-            //obj.originalScale=plushObj.originalScale;
-            //obj.transform.localScale=obj.originalScale;
+            //MischievousPlushies.Logger.LogInfo("size1: " +sizeObj + "size2: "+sizePlush);
+            foreach(MeshRenderer rend in obj.transform.GetComponentsInChildren<MeshRenderer>()){
+                rend.forceRenderingOff=true;
+            }
 
-            //filter.transform.rotation=quaternion.identity;
-            //MischievousPlushies.Logger.LogInfo(obj.mainObjectRenderer.GetComponentInChildren<MeshFilter>());
+            GameObject fakePlushObj = new GameObject("fake plush");
+            fakePlushObj.AddComponent<MeshRenderer>().materials=PlushObj.GetComponent<MeshRenderer>().materials;
+            fakePlushObj.AddComponent<MeshFilter>().mesh=PlushObj.GetComponent<MeshFilter>().mesh;
+            fakePlushObj.transform.rotation=obj.transform.rotation;
+            fakePlushObj.transform.Rotate(-obj.itemProperties.restingRotation.x,0,0);
+            fakePlushObj.transform.position = obj.transform.position;
+            fakePlushObj.transform.localScale=Vector3.one*sizeObj/sizePlush*PlushObj.originalScale.y; //scaling object to match original height
+            fakePlushObj.transform.parent=obj.transform;
 
-            obj.GetComponentInChildren<ScanNodeProperties>().headerText = plushObj.GetComponentInChildren<ScanNodeProperties>().headerText;
-           // obj.itemProperties = plushObj.itemProperties;
+            obj.GetComponentInChildren<ScanNodeProperties>().headerText = PlushObj.GetComponentInChildren<ScanNodeProperties>().headerText;
+            obj.customGrabTooltip = PlushObj.customGrabTooltip;
+            // obj.itemProperties = plushObj.itemProperties;
         }
     }
 }

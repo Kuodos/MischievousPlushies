@@ -7,6 +7,8 @@ using System.Reflection;
 using MischevoiusPlushies;
 using MischievousPlushies.PlushCode;
 using System.Linq;
+using GameNetcodeStuff;
+using MischievousPlushies.Patches;
 namespace MischievousPlushies;
 
 [BepInPlugin(GUID, NAME, VERSION)]
@@ -44,12 +46,13 @@ public class MischievousPlushies : BaseUnityPlugin
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(item.spawnPrefab);
             LethalLib.Modules.Items.RegisterScrap(item, iRarity, LethalLib.Modules.Levels.LevelTypes.All);
         }
-        PlushCosplayer.plushieAllowList=Plushies.ToList();
+        PlushCosplayer.PlushieAllowList=Plushies.ToList();
         
         networkerPrefab=plushieAssets.LoadAsset<GameObject>("PlushNetworker");
         Logger.LogInfo(harmony.Id);
         //harmony.PatchAll();
         Harmony.CreateAndPatchAll(typeof(NetworkerPatch));
+        Harmony.CreateAndPatchAll(typeof(ReportDeathsPatch));
         Logger.LogInfo("MischievousPlushies is loaded! xˬx ");
     }
 

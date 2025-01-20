@@ -10,17 +10,14 @@ namespace MischevoiusPlushies
 {
     public class NetworkerPatch
     {
-        static GameObject networkerPrefab;
+        static GameObject networkerPrefab = MischievousPlushies.MischievousPlushies.networkerPrefab;
         [HarmonyPostfix, HarmonyPatch(typeof(GameNetworkManager), nameof(GameNetworkManager.Start))]
         public static void AddPrefab(ref GameNetworkManager __instance)
         {
-            if (networkerPrefab == null)
-            {
-                networkerPrefab = MischievousPlushies.MischievousPlushies.networkerPrefab;
-                networkerPrefab.AddComponent<PlushNetworker>();
-                NetworkManager.Singleton.AddNetworkPrefab(networkerPrefab);
-                MischievousPlushies.MischievousPlushies.Logger.LogInfo("xˬx PlushNet launchning. xˬx");
-            }
+
+            networkerPrefab.AddComponent<PlushNetworker>();
+            NetworkManager.Singleton.AddNetworkPrefab(networkerPrefab);
+            MischievousPlushies.MischievousPlushies.Logger.LogInfo("xˬx PlushNet launchning. xˬx");
 
             //UnityNetcodePatcher stuff
             var types = Assembly.GetExecutingAssembly().GetTypes();
