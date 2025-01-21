@@ -92,6 +92,21 @@ namespace MischievousPlushies
             NetworkObject source = NetworkManager.Singleton.SpawnManager.SpawnedObjects[sourceId];
             source.GetComponent<PlushLifeboundExploder>().Explode();
         }
+
+        [ClientRpc]
+        public void TeleportPlayerClientRPC(ulong playerId, Vector3 pos)
+        {
+            NetworkObject source = NetworkManager.Singleton.SpawnManager.SpawnedObjects[playerId];
+            source.GetComponent<PlayerControllerB>().TeleportPlayer(pos);
+        }
+        [ClientRpc]
+        public void TeleportItemClientRPC(ulong itemId, Vector3 pos)
+        {
+            GrabbableObject item = NetworkManager.Singleton.SpawnManager.SpawnedObjects[itemId].GetComponent<GrabbableObject>();
+            if(item.playerHeldBy==GameNetworkManager.Instance.localPlayerController) item.DiscardItemClientRpc();
+            
+            item.targetFloorPosition=pos;
+        }
         public void LifeboundExploderCheckOwners()
         {
             foreach (PlushLifeboundExploder exploder in GameObject.FindObjectsByType<PlushLifeboundExploder>(FindObjectsSortMode.None))

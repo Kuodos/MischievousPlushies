@@ -49,6 +49,7 @@ namespace MischievousPlushies.PlushCode
         public static void UpdatePlushList()
         {
             GrabbableObject[] plushies = FindObjectsByType<GrabbableObject>(FindObjectsSortMode.None);
+            PlushiesList.Clear();
             foreach (GrabbableObject obj in plushies)
             {
                 if (obj.itemProperties.itemName.ToLower().Contains("plush")||obj.itemProperties.itemName.ToLower().Contains("fumo"))

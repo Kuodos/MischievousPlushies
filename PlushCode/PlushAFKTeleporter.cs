@@ -16,44 +16,57 @@ namespace MischievousPlushies.PlushCode
         private static bool isHost => RoundManager.Instance.NetworkManager.IsHost;
         private static ShipLights shipLights { get; set; } = null!;
         private static InteractTrigger lightSwitch { get; set; } = null!;
-        private static float checkAFK_timer = 30f, checkAFK_timerMax = 30f;
+        private float checkAFK_Cur=60f;
+        private static float checkAFK_Timer = 30f;
         private static PlayerControllerB[] Players { get; set; } = null!;
         private static Dictionary<PlayerControllerB, Vector3> PlayerRots { get; set; } = null!;
         private static List<PlayerControllerB> AfkPlayers { get; set; } = null!;
+        private static bool teleporting = false, setup = false;
 
         private void Awake()
         {
             plushObj = GetComponent<GrabbableObject>();
-            if (isHost)
+            if (isHost && !setup)
             {
-                shipLights = GameObject.FindFirstObjectByType<ShipLights>();
-                lightSwitch = GameObject.Find("LightSwitchContainer").GetComponentInChildren<InteractTrigger>();
-                AfkPlayers = new List<PlayerControllerB>();
-                PlayerRots = new Dictionary<PlayerControllerB, Vector3>();
-                Players = StartOfRound.Instance.allPlayerScripts;
-                foreach (var player in Players)
-                {
-                    PlayerRots.Add(player, player.transform.rotation.eulerAngles);
-                }
+                Init();
             }
         }
-        private void Update()
+        private void Init()
         {
-            if (isHost)
+            setup = true;
+            shipLights = GameObject.FindFirstObjectByType<ShipLights>();
+            lightSwitch = GameObject.Find("LightSwitchContainer").GetComponentInChildren<InteractTrigger>();
+            AfkPlayers = new List<PlayerControllerB>();
+            PlayerRots = new Dictionary<PlayerControllerB, Vector3>();
+            Players = StartOfRound.Instance.allPlayerScripts;
+            foreach (var player in Players)
             {
-                checkAFK_timer -= Time.deltaTime;
-                if (checkAFK_timer < 0)
-                {
-                    checkAFK_timer = checkAFK_timerMax;
+                PlayerRots.Add(player, player.transform.rotation.eulerAngles);
+            }
+        }
+        private void Update(){
+            if(isHost&&plushObj.isInShipRoom){
+                checkAFK_Cur-=Time.deltaTime;
+                if(checkAFK_Cur<0){
+                    checkAFK_Cur=checkAFK_Timer;
                     ScanAFK();
                 }
             }
         }
-        private void ScanAFK()
+        private static void ScanAFK()
         {
             isActivePlayerOnShip = false;
-            if (StartOfRound.Instance.inShipPhase) return;
-            if (plushObj.isInShipRoom)
+            GrabbableObject? firstPlush = null;
+            if (StartOfRound.Instance.inShipPhase || StartOfRound.Instance.shipIsLeaving || teleporting) return;
+            foreach (PlushAFKTeleporter telObj in GameObject.FindObjectsByType<PlushAFKTeleporter>(FindObjectsSortMode.None))
+            {
+                if (telObj.plushObj.isInShipRoom && !telObj.plushObj.isHeld)
+                {
+                    firstPlush = telObj.plushObj;
+                    break;
+                }
+            }
+            if (firstPlush != null)
             {
                 //MischievousPlushies.Logger.LogInfo("Looking for AFK players...");
                 foreach (var player in Players)
@@ -64,8 +77,8 @@ namespace MischievousPlushies.PlushCode
                         {
                             if (!isActivePlayerOnShip)
                             {
-                                //MischievousPlushies.Logger.LogInfo("xˬx target locked xˬx");
-                                StartCoroutine(TeleportPlayerSequence(player));
+                                MischievousPlushies.Logger.LogInfo("xˬx target locked xˬx");
+                                firstPlush.GetComponent<PlushAFKTeleporter>().StartTeleportSequence(player);
                             }
                             AfkPlayers.Clear();
                         }
@@ -76,7 +89,7 @@ namespace MischievousPlushies.PlushCode
                 }
             }
         }
-        bool isPlayerAFK(PlayerControllerB player)
+        static bool isPlayerAFK(PlayerControllerB player)
         {
             if (player.isPlayerDead)
             {
@@ -91,32 +104,27 @@ namespace MischievousPlushies.PlushCode
             if (player.isInHangarShipRoom)
             {
                 float deltaRot = (PlayerRots[player] - player.transform.rotation.eulerAngles).magnitude;
-                if (player.timeSincePlayerMoving > checkAFK_timerMax)
+                if (player.timeSincePlayerMoving > checkAFK_Timer)
                 {
                     if (deltaRot < 0.5f)
                     {
-                        MischievousPlushies.Logger.LogInfo(player.name + " is AFK! ");
+                        //MischievousPlushies.Logger.LogInfo(player.name + " is AFK! ");
                         return true;
                     }
-                    else
-                    {
-                        //SquishCompany.Logger.LogInfo(player.name + " not AFK - moved mouse:" + deltaRot);
-                    }
-                }
-                else
-                {
-                    //SquishCompany.Logger.LogInfo(player.name + " not AFK - moved");
                 }
                 isActivePlayerOnShip = true;
             }
-            //else SquishCompany.Logger.LogInfo(player.name + " not inside ship");
             return false;
         }
-
+        public void StartTeleportSequence(PlayerControllerB player)
+        {
+            teleporting = true;
+            StartCoroutine(TeleportPlayerSequence(player));
+        }
         IEnumerator TeleportPlayerSequence(PlayerControllerB player)
         {
             ShipTeleporter? teleporter = null;
-            foreach (ShipTeleporter tp in GameObject.FindObjectsOfType<ShipTeleporter>())
+            foreach (ShipTeleporter tp in GameObject.FindObjectsByType<ShipTeleporter>(FindObjectsSortMode.None))
             {
                 if (tp.isInverseTeleporter && tp.CanUseInverseTeleporter())
                 {
@@ -125,18 +133,23 @@ namespace MischievousPlushies.PlushCode
             }
             if (teleporter != null)
             {
-
-                if (shipLights.areLightsOn)
-                {
-                    lightSwitch.Interact(player.transform);
-                }
+                if (shipLights.areLightsOn) lightSwitch.Interact(player.transform);
                 yield return new WaitForSeconds(15f);
-                if (!isPlayerAFK(player)) yield break;
+                if (!isPlayerAFK(player))
+                {
+                    teleporting = false;
+                    yield break;
+                }
                 MischievousPlushies.Logger.LogInfo("xˬx teleporting xˬx");
-                plushObj.targetFloorPosition=teleporter.transform.Find("RedButton").position-transform.parent.position+Vector3.up*0.3f;
-                player.TeleportPlayer(teleporter.teleporterPosition.position);
+                //ButtonContainer->ButtonAnimContainer->RedButton
+                Vector3 buttonPos = teleporter.transform.GetChild(1).GetChild(0).GetChild(0).position - transform.parent.position + Vector3.up * 0.05f;
+                PlushNetworker.Instance.TeleportItemClientRPC(plushObj.NetworkObjectId, buttonPos);
+                PlushNetworker.Instance.TeleportPlayerClientRPC(player.NetworkObjectId, teleporter.teleporterPosition.position);
                 teleporter.PressTeleportButtonServerRpc();
+                teleporting = false;
             }
+            else teleporting = false;
         }
+        
     }
 }
