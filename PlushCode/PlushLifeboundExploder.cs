@@ -30,7 +30,7 @@ namespace MischievousPlushies.PlushCode
         }
         public void SetOwner(PlayerControllerB owner){
             if(ignoreNewOwners) return;
-            //MischievousPlushies.Logger.LogInfo("New owner: " + owner.playerUsername);
+            MischievousPlushies.LogInfo(plushObj.name + " has a new owner: " + owner.playerUsername);
             ownerObj=owner;
             ignoreNewOwners=true;
         }
@@ -47,7 +47,7 @@ namespace MischievousPlushies.PlushCode
             /*if(plushObj.isHeld||plushObj.isPocketed){
                 plushObj.DiscardItemClientRpc();
             }*/
-            //MischievousPlushies.Logger.LogInfo("Kaboom!");
+            MischievousPlushies.LogInfo("Kaboom!");
             if(explodeClip!=null) GetComponent<AudioSource>().PlayOneShot(explodeClip,1f);
             Landmine.SpawnExplosion(plushObj.transform.position,spawnExplosionEffect:true,2f,5f);
             plushObj.transform.gameObject.SetActive(false);

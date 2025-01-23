@@ -64,9 +64,9 @@ namespace MischievousPlushies.PlushCode
                 }
             }
             PruneConvertedList();
-            /* foreach (GrabbableObject obj in PlushiesList){
-                 MischievousPlushies.Logger.LogInfo("Plushie found: " + obj.name);
-             }*/
+             foreach (GrabbableObject obj in PlushiesList){
+                 MischievousPlushies.LogInfo("Cosplayer found a plushie: " + obj.name);
+             }
         }
         public static void PruneConvertedList(){
             ConvertedPlushies.RemoveAll(plush=>plush==null);
@@ -96,15 +96,13 @@ namespace MischievousPlushies.PlushCode
                             }
                         }
                     }
-                    //MischievousPlushies.Logger.LogInfo("final: " + plush);
-                   // MischievousPlushies.Logger.LogInfo("plushNet: " + (PlushNetworker.Instance!=null?"operational":"broke"));
                     if (plush != null)
                     {
                         if (PlushNetworker.Instance == null) return;
                         ConvertedPlushies.Add(plush);
                         PlushiesList.Remove(plush);
                         ulong targetID = plush.NetworkObjectId;
-                        //MischievousPlushies.Logger.LogInfo(targetID + "converted");
+                        MischievousPlushies.LogInfo(targetID + "converted");
                         PlushNetworker.Instance.CosplayClientRPC(PlushObj.NetworkObjectId, targetID);
                     }
                 }
@@ -125,7 +123,6 @@ namespace MischievousPlushies.PlushCode
             float sizeObj = filter.mesh.bounds.size.y*filter.transform.lossyScale.y;
             float sizePlush = PlushObj.GetComponent<MeshFilter>().mesh.bounds.size.y*PlushObj.GetComponent<MeshFilter>().transform.lossyScale.y;
 
-            //MischievousPlushies.Logger.LogInfo("size1: " +sizeObj + "size2: "+sizePlush);
             foreach(MeshRenderer rend in obj.transform.GetComponentsInChildren<MeshRenderer>()){
                 rend.forceRenderingOff=true;
             }
@@ -141,7 +138,6 @@ namespace MischievousPlushies.PlushCode
 
             obj.GetComponentInChildren<ScanNodeProperties>().headerText = PlushObj.GetComponentInChildren<ScanNodeProperties>().headerText;
             obj.customGrabTooltip = PlushObj.customGrabTooltip;
-            // obj.itemProperties = plushObj.itemProperties;
         }
     }
 }

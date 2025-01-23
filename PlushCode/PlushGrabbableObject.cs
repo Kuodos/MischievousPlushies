@@ -13,19 +13,26 @@ namespace MischievousPlushies.PlushCode
     {
         private static string recordings;
         public AudioClip defaultNoise;
-        public UnityEvent onGrabEvent;
+        public UnityEvent onGrabEvent = new UnityEvent(), onDiscardEvent = new UnityEvent();
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
             recordings ??= Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
             onGrabEvent ??= new UnityEvent();
             if(GetComponent<PlushLifeboundExploder>()) GetComponent<PlushLifeboundExploder>().Init();
+            
         }
         public override void GrabItem()
         {
             base.GrabItem();
-            onGrabEvent.Invoke();
+            onGrabEvent?.Invoke();
         }
+        public override void DiscardItem()
+        {
+            base.DiscardItem();
+            onDiscardEvent?.Invoke();
+        }
+        
 
         public override void ItemActivate(bool used, bool buttonDown = true)
         {
@@ -34,7 +41,7 @@ namespace MischievousPlushies.PlushCode
         }
         public override void OnDestroy()
         {
-            onGrabEvent.RemoveAllListeners();
+            onGrabEvent?.RemoveAllListeners();
             base.OnDestroy();
         }
     }

@@ -6,6 +6,7 @@ using GameNetcodeStuff;
 using MischievousPlushies.PlushCode;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
 
 namespace MischievousPlushies
 {
@@ -13,16 +14,37 @@ namespace MischievousPlushies
     {
         public static PlushNetworker Instance { get; private set; }
         public static List<ulong>? AlivePlayersNetworkObjects { get; private set; }
+        private static bool isHost => RoundManager.Instance.NetworkManager.IsHost;
         public override void OnNetworkSpawn()
         {
             Instance = this;
-            MischievousPlushies.Logger.LogInfo("xˬx PlushNet operational. Launching nuclear missiles. xˬx");
+            MischievousPlushies.LogInfo("xˬx PlushNet operational. Launching nuclear missiles. xˬx");
             AlivePlayersNetworkObjects = new List<ulong>();
             UpdateAlivePlayerListServerRPC();
-            if (!IsHost)
+            if (IsHost)
             {
+                
             }
             base.OnNetworkSpawn();
+        }
+        public static void OnEnemySpawn(){
+            //if(!StartOfRound.Instance.shipHasLanded) return;
+            if(isHost) Instance.UpdateBeeHivesClientRPC();
+        }
+
+        public override void OnDestroy(){
+            base.OnDestroy();
+        }
+        [ClientRpc]
+        public void UpdateBeeHivesClientRPC(){
+            //MischievousPlushies.LogInfo("got RPC check hives");
+            PlushBeeMagnet.UpdateBeeHives();
+        }
+        [ClientRpc]
+        public void SetTargetClientRPC(ulong agent, Vector3 target){
+           // MischievousPlushies.LogInfo("got RPC target");
+            NetworkObject src = NetworkManager.Singleton.SpawnManager.SpawnedObjects[agent];
+            src.GetComponent<GrabbableNavMeshAgent>().SetTarget(target);
         }
         [ServerRpc(RequireOwnership = false)]
         public void UpdateAlivePlayerListServerRPC()
@@ -63,7 +85,7 @@ namespace MischievousPlushies
         {
             if(IsOwner) return;
             PlushCosplayer.SetConvertedPlushies(CosplayerList);
-            MischievousPlushies.Logger.LogInfo("xˬx PlushNet: Sent convertees list. xˬx");
+            MischievousPlushies.LogInfo("xˬx PlushNet: Sent convertees list. xˬx");
         }
 
         [ClientRpc]
@@ -103,7 +125,7 @@ namespace MischievousPlushies
         public void TeleportItemClientRPC(ulong itemId, Vector3 pos)
         {
             GrabbableObject item = NetworkManager.Singleton.SpawnManager.SpawnedObjects[itemId].GetComponent<GrabbableObject>();
-            if(item.playerHeldBy==GameNetworkManager.Instance.localPlayerController) item.DiscardItemClientRpc();
+            //if(item.playerHeldBy==GameNetworkManager.Instance.localPlayerController) item.DiscardItemClientRpc();
             
             item.targetFloorPosition=pos;
         }
@@ -117,5 +139,6 @@ namespace MischievousPlushies
                 }
             }
         }
+        
     }
 }

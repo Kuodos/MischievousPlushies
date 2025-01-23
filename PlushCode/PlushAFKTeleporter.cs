@@ -68,7 +68,7 @@ namespace MischievousPlushies.PlushCode
             }
             if (firstPlush != null)
             {
-                //MischievousPlushies.Logger.LogInfo("Looking for AFK players...");
+                MischievousPlushies.LogInfo("Looking for AFK players...");
                 foreach (var player in Players)
                 {
                     if (isPlayerAFK(player))
@@ -77,7 +77,7 @@ namespace MischievousPlushies.PlushCode
                         {
                             if (!isActivePlayerOnShip)
                             {
-                                MischievousPlushies.Logger.LogInfo("xˬx target locked xˬx");
+                                MischievousPlushies.LogInfo("xˬx target locked xˬx");
                                 firstPlush.GetComponent<PlushAFKTeleporter>().StartTeleportSequence(player);
                             }
                             AfkPlayers.Clear();
@@ -93,12 +93,10 @@ namespace MischievousPlushies.PlushCode
         {
             if (player.isPlayerDead)
             {
-                //SquishCompany.Logger.LogInfo(player.name + " dead");
                 return false;
             }
             if (player.inTerminalMenu)
             {
-                //SquishCompany.Logger.LogInfo(player.name + " gaming");
                 return false;
             }
             if (player.isInHangarShipRoom)
@@ -108,7 +106,7 @@ namespace MischievousPlushies.PlushCode
                 {
                     if (deltaRot < 0.5f)
                     {
-                        //MischievousPlushies.Logger.LogInfo(player.name + " is AFK! ");
+                        MischievousPlushies.LogInfo(player.name + " is AFK! ");
                         return true;
                     }
                 }
@@ -140,7 +138,7 @@ namespace MischievousPlushies.PlushCode
                     teleporting = false;
                     yield break;
                 }
-                MischievousPlushies.Logger.LogInfo("xˬx teleporting xˬx");
+                MischievousPlushies.LogInfo("xˬx teleporting xˬx");
                 //ButtonContainer->ButtonAnimContainer->RedButton
                 Vector3 buttonPos = teleporter.transform.GetChild(1).GetChild(0).GetChild(0).position - transform.parent.position + Vector3.up * 0.05f;
                 PlushNetworker.Instance.TeleportItemClientRPC(plushObj.NetworkObjectId, buttonPos);

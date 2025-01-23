@@ -18,5 +18,8 @@ namespace MischievousPlushies.PlushCode
 
             }
         }
+        public void ReplaceShovel(GrabbableObject shovel){
+            
+        }
     }
 }
