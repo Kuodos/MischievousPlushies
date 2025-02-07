@@ -14,6 +14,7 @@ namespace MischievousPlushies.PlushCode
         private static System.Random random = new System.Random();
         private PlushGrabbableObject plushObj { get; set; } = null!;
         private static bool isHost => RoundManager.Instance.NetworkManager.IsHost;
+        private static bool isInActivePhase => !StartOfRound.Instance.inShipPhase&&StartOfRound.Instance.shipHasLanded&&!StartOfRound.Instance.shipIsLeaving;
         private static List<GrabbableObject> Hives = new();
         private float beeMagnetTimer = 10f;
         private static float beeMagnetTimerMax = 10f, beeMagnetStopRadius = 1f, beeMagnetShipStopRadius=3f, beeMagnetSpeed = 0.5f;
@@ -31,7 +32,7 @@ namespace MischievousPlushies.PlushCode
         }
         private void Update()
         {
-            if(!isHost|| StartOfRound.Instance.inShipPhase || !StartOfRound.Instance.shipHasLanded||plushObj.isInFactory) return;
+            if(!isHost|| !isInActivePhase ||plushObj.isInFactory) return;
             beeMagnetTimer -= Time.deltaTime;
             if(plushObj.isHeld) beeMagnetTimer -=Time.deltaTime*7f;//update faster if plush is held for smoother pathing
             if (beeMagnetTimer < 0)
@@ -99,7 +100,7 @@ namespace MischievousPlushies.PlushCode
                 {
 
                     GrabbableNavMeshAgent agent = hive.GetComponent<GrabbableNavMeshAgent>();
-                    //agent.StopPathing();
+                    agent.StopPathing();
                 }
             }
         }

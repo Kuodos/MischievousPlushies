@@ -14,6 +14,7 @@ namespace MischievousPlushies.PlushCode
         private static bool isActivePlayerOnShip = false;
         private GrabbableObject plushObj { get; set; } = null!;
         private static bool isHost => RoundManager.Instance.NetworkManager.IsHost;
+        private static bool isInActivePhase => !StartOfRound.Instance.inShipPhase&&StartOfRound.Instance.shipHasLanded&&!StartOfRound.Instance.shipIsLeaving;
         private static ShipLights shipLights { get; set; } = null!;
         private static InteractTrigger lightSwitch { get; set; } = null!;
         private float checkAFK_Cur=60f;
@@ -41,8 +42,9 @@ namespace MischievousPlushies.PlushCode
             Players = StartOfRound.Instance.allPlayerScripts;
             foreach (var player in Players)
             {
-                PlayerRots.Add(player, player.transform.rotation.eulerAngles);
+                PlayerRots.Add(player, Vector3.zero);
             }
+            MischievousPlushies.LogInfo("Found " + PlayerRots.Keys.Count() + " players");
         }
         private void Update(){
             if(isHost&&plushObj.isInShipRoom){
@@ -57,7 +59,7 @@ namespace MischievousPlushies.PlushCode
         {
             isActivePlayerOnShip = false;
             GrabbableObject? firstPlush = null;
-            if (StartOfRound.Instance.inShipPhase || StartOfRound.Instance.shipIsLeaving || teleporting) return;
+            if (!isInActivePhase || teleporting) return;
             foreach (PlushAFKTeleporter telObj in GameObject.FindObjectsByType<PlushAFKTeleporter>(FindObjectsSortMode.None))
             {
                 if (telObj.plushObj.isInShipRoom && !telObj.plushObj.isHeld)

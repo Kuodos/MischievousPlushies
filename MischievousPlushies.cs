@@ -19,7 +19,7 @@ public class MischievousPlushies : BaseUnityPlugin
 {
     public const string GUID = "Kuodos.MischievousPlushies";
     public const string NAME = "MischievousPlushies";
-    public const string VERSION = "0.4.0";
+    public const string VERSION = "0.5.0";
     private static AssetBundle plushieAssets { get; set; } = null!;
     public static GameObject networkerPrefab { get; set; } = null!;
     public static MischievousPlushies Instance { get; private set; } = null!;

@@ -11,50 +11,97 @@ namespace MischievousPlushies.PlushCode
     {
         private GrabbableObject obj;
         private NavMeshAgent agent;
-        private bool stopPathing=false;
-        public void Init(float speed){
+        private Transform? targetTransform;
+        private bool stopPathing = false;
+        public void Init(float speed, float baseOffset = 0.2f, bool updateRotation = false, float stoppingDistance = 0)
+        {
             obj = GetComponent<GrabbableObject>();
-            if(obj.GetComponent<NavMeshAgent>() != null){
+            if (obj.GetComponent<NavMeshAgent>() != null)
+            {
                 agent = obj.GetComponent<NavMeshAgent>();
             }
-            else {
+            else
+            {
                 agent = obj.gameObject.AddComponent<NavMeshAgent>();
             }
-            agent.areaMask=NavMesh.AllAreas;
-            agent.speed=speed;
-            agent.updatePosition=false;
-            agent.updateRotation=false;
-            agent.baseOffset=0.4f;
-            agent.height=1.5f;
-            agent.obstacleAvoidanceType=ObstacleAvoidanceType.LowQualityObstacleAvoidance;
-            agent.stoppingDistance=0f;
+            agent.areaMask = NavMesh.AllAreas;
+            agent.speed = speed;
+            agent.updatePosition = false;
+            agent.updateRotation = updateRotation;
+            agent.baseOffset = baseOffset;
+            agent.height = 2f;
+            agent.obstacleAvoidanceType = ObstacleAvoidanceType.MedQualityObstacleAvoidance;
+            agent.stoppingDistance = stoppingDistance;
+            agent.autoBraking=false;
+            agent.angularSpeed=360;
+            agent.acceleration=100; //todo fix jitter
+            agent.autoTraverseOffMeshLink=true;
         }
 
-        public void SetTarget(Vector3 target){
-            if(!agent.enabled) return;
-            agent.ResetPath();
-            agent.nextPosition=RoundManager.Instance.GetNavMeshPosition(obj.transform.position, RoundManager.Instance.navHit, 2f, NavMesh.AllAreas);
+        public void SetTargetPosition(Vector3 target)
+        {
+            if (!agent.enabled) return;
+           // agent.ResetPath();
+            agent.Warp(RoundManager.Instance.GetNavMeshPosition(obj.transform.position, RoundManager.Instance.navHit, 2f, NavMesh.AllAreas));
             bool gotPath = agent.SetDestination(target);
-            if(gotPath) {
-               // MischievousPlushies.LogInfo(obj.name+ " got destination: "+target);
-                stopPathing=false;
+            if (gotPath)
+            {
+                stopPathing = false;
+              //  MischievousPlushies.LogInfo(obj.name + " - path found: " + obj.transform.position + " --> " + agent.destination);
             }
-            else MischievousPlushies.LogInfo(obj.name+ " - No path found!");
+            //else MischievousPlushies.LogInfo(obj.name + " - No path found!");
         }
-        public void StopPathing(){
+        public void SetTarget(Transform? targetTransform)
+        {
+            this.targetTransform = targetTransform;
+            if (targetTransform == null) StopPathing();
+            else GetNewPosition();
+        }
+        public void Teleport(Vector3 target)
+        {
+            MischievousPlushies.LogInfo("Teleporting object to "+target);
+            Vector3 newpos;
+            transform.position=target;
+            StopPathing();
+            newpos=RoundManager.Instance.GetNavMeshPosition(target, RoundManager.Instance.navHit, 2f, NavMesh.AllAreas);
+            agent.Warp(newpos);
+            SetObjectPosition();
+            obj.isInFactory = (agent.nextPosition.y<-80); //should work?
+            obj.isInShipRoom = StartOfRound.Instance.shipInnerRoomBounds.bounds.Contains(newpos);
+            obj.isInElevator = obj.isInShipRoom;
+            if(obj.isInShipRoom){
+                obj.transform.SetParent(StartOfRound.Instance.elevatorTransform);
+            }
+           // MischievousPlushies.LogInfo("object in factory:"+obj.isInFactory + " " + agent.nextPosition + " " + newpos);
+        }
+        private void GetNewPosition()
+        {
+            if (targetTransform == null) return;
+            SetTargetPosition(targetTransform.transform.position);
+        }
+        public void StopPathing()
+        {
             stopPathing = true;
             agent.ResetPath();
         }
-        private void LateUpdate(){
-            if(stopPathing){
+        private void LateUpdate()
+        {
+            if (stopPathing)
+            {
                 return;
             }
 
-            if(obj.isHeld) StopPathing();
-            if(obj.transform.parent!=null) {
-                obj.targetFloorPosition=obj.transform.parent.InverseTransformPoint(agent.nextPosition); //queue Duster - Me and the birds
+            if (obj.isHeld) StopPathing();
+            SetObjectPosition();
+        }
+        private void SetObjectPosition(){
+            
+            if (obj.transform.parent != null)
+            {
+                obj.targetFloorPosition = obj.transform.parent.InverseTransformPoint(agent.nextPosition); //queue Duster - Me and the birds
             }
-            else {
+            else
+            {
                 obj.targetFloorPosition = agent.nextPosition;
             }
         }

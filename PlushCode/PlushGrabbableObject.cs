@@ -17,7 +17,8 @@ namespace MischievousPlushies.PlushCode
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
-            recordings ??= Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+            //todo play random voice recording on use if Mirage is installed
+            recordings ??= Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName)+"\\Recordings\\"; 
             onGrabEvent ??= new UnityEvent();
             if(GetComponent<PlushLifeboundExploder>()) GetComponent<PlushLifeboundExploder>().Init();
             

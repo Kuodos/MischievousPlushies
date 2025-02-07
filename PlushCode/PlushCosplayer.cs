@@ -25,24 +25,30 @@ namespace MischievousPlushies.PlushCode
                 ConvertedPlushies.Add(PlushObj);
                 UpdatePlushList();
             }
-            else{
+            else
+            {
                 PlushNetworker.Instance.RequestCosplayerListServerRPC(NetworkManager.Singleton.LocalClientId);
             }
             StartOfRound.Instance.StartNewRoundEvent.AddListener(MassConvert);
         }
-        void OnDestroy(){
+        void OnDestroy()
+        {
             StartOfRound.Instance.StartNewRoundEvent.RemoveListener(MassConvert);
         }
-        public static void SetConvertedPlushies(ulong[] Cosplayers){
+        public static void SetConvertedPlushies(ulong[] Cosplayers)
+        {
             ConvertedPlushies.Clear();
-            foreach(ulong id in Cosplayers){
+            foreach (ulong id in Cosplayers)
+            {
                 ConvertedPlushies.Add(NetworkManager.Singleton.SpawnManager.SpawnedObjects[id].transform.GetComponent<GrabbableObject>());
             }
             FindAnyObjectByType<PlushCosplayer>().MassConvert();
         }
-        public void MassConvert(){
+        public void MassConvert()
+        {
             PruneConvertedList();
-            foreach(GrabbableObject obj in ConvertedPlushies){
+            foreach (GrabbableObject obj in ConvertedPlushies)
+            {
                 PlushConvert(obj);
             }
         }
@@ -52,7 +58,7 @@ namespace MischievousPlushies.PlushCode
             PlushiesList.Clear();
             foreach (GrabbableObject obj in plushies)
             {
-                if (obj.itemProperties.itemName.ToLower().Contains("plush")||obj.itemProperties.itemName.ToLower().Contains("fumo"))
+                if (obj.itemProperties.itemName.ToLower().Contains("plush") || obj.itemProperties.itemName.ToLower().Contains("fumo"))
                 {
                     if (!ConvertedPlushies.Contains(obj) && !PlushiesList.Contains(obj))
                     {
@@ -64,12 +70,14 @@ namespace MischievousPlushies.PlushCode
                 }
             }
             PruneConvertedList();
-             foreach (GrabbableObject obj in PlushiesList){
-                 MischievousPlushies.LogInfo("Cosplayer found a plushie: " + obj.name);
-             }
+            foreach (GrabbableObject obj in PlushiesList)
+            {
+                MischievousPlushies.LogInfo("Cosplayer found a plushie: " + obj.name);
+            }
         }
-        public static void PruneConvertedList(){
-            ConvertedPlushies.RemoveAll(plush=>plush==null);
+        public static void PruneConvertedList()
+        {
+            ConvertedPlushies.RemoveAll(plush => plush == null);
         }
         private void Update()
         {
@@ -111,31 +119,39 @@ namespace MischievousPlushies.PlushCode
 
         public void PlushConvert(GrabbableObject obj)
         {
-            MeshFilter filter;
-            if (obj.mainObjectRenderer != null)
+            if (obj.GetComponentInChildren<SkinnedMeshRenderer>() != null && obj.itemProperties.itemName.ToLower().Contains("kuodos"))
             {
-                filter = obj.mainObjectRenderer.transform.GetComponent<MeshFilter>();
+                obj.GetComponentInChildren<SkinnedMeshRenderer>().materials = PlushObj.GetComponent<MeshRenderer>().materials;
             }
             else
             {
-                filter = obj.GetComponent<MeshFilter>();
+                MeshFilter filter;
+                if (obj.mainObjectRenderer != null)
+                {
+                    filter = obj.mainObjectRenderer.transform.GetComponent<MeshFilter>();
+                }
+                else
+                {
+                    filter = obj.GetComponent<MeshFilter>();
+                }
+                float sizeObj = filter.mesh.bounds.size.y * filter.transform.lossyScale.y;
+                float sizePlush = PlushObj.GetComponent<MeshFilter>().mesh.bounds.size.y * PlushObj.GetComponent<MeshFilter>().transform.lossyScale.y;
+
+                //disable original MeshRenderer, add a copy of PlushCosplayer MeshRenderer
+                foreach (MeshRenderer rend in obj.transform.GetComponentsInChildren<MeshRenderer>())
+                {
+                    rend.forceRenderingOff = true;
+                }
+
+                GameObject fakePlushObj = new GameObject("fake plush");
+                fakePlushObj.AddComponent<MeshRenderer>().materials = PlushObj.GetComponent<MeshRenderer>().materials;
+                fakePlushObj.AddComponent<MeshFilter>().mesh = PlushObj.GetComponent<MeshFilter>().mesh;
+                fakePlushObj.transform.rotation = obj.transform.rotation;
+                fakePlushObj.transform.Rotate(-obj.itemProperties.restingRotation.x, 0, 0);
+                fakePlushObj.transform.position = obj.transform.position;
+                fakePlushObj.transform.localScale = Vector3.one * sizeObj / sizePlush * PlushObj.originalScale.y; //scaling object to match original height
+                fakePlushObj.transform.parent = obj.transform;
             }
-            float sizeObj = filter.mesh.bounds.size.y*filter.transform.lossyScale.y;
-            float sizePlush = PlushObj.GetComponent<MeshFilter>().mesh.bounds.size.y*PlushObj.GetComponent<MeshFilter>().transform.lossyScale.y;
-
-            foreach(MeshRenderer rend in obj.transform.GetComponentsInChildren<MeshRenderer>()){
-                rend.forceRenderingOff=true;
-            }
-
-            GameObject fakePlushObj = new GameObject("fake plush");
-            fakePlushObj.AddComponent<MeshRenderer>().materials=PlushObj.GetComponent<MeshRenderer>().materials;
-            fakePlushObj.AddComponent<MeshFilter>().mesh=PlushObj.GetComponent<MeshFilter>().mesh;
-            fakePlushObj.transform.rotation=obj.transform.rotation;
-            fakePlushObj.transform.Rotate(-obj.itemProperties.restingRotation.x,0,0);
-            fakePlushObj.transform.position = obj.transform.position;
-            fakePlushObj.transform.localScale=Vector3.one*sizeObj/sizePlush*PlushObj.originalScale.y; //scaling object to match original height
-            fakePlushObj.transform.parent=obj.transform;
-
             obj.GetComponentInChildren<ScanNodeProperties>().headerText = PlushObj.GetComponentInChildren<ScanNodeProperties>().headerText;
             obj.customGrabTooltip = PlushObj.customGrabTooltip;
         }
