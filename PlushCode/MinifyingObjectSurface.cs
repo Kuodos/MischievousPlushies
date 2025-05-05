@@ -130,7 +130,6 @@ namespace MischievousPlushies.PlushCode
                 matchedRot.y = obj.itemProperties.floorYOffset;
                 if (obj.name.ToLower().Contains("flashlight")) matchedRot.y = 90;
                 if (obj.name.ToLower().Contains("plush")) matchedRot.y -= 90;
-                // MischievousPlushies.LogInfo("Obj rot: " + objectHeld.transform.localEulerAngles + "->" + matchedRot);
                 objectHeld.transform.localRotation = Quaternion.Euler(matchedRot);
             }
             MischievousPlushies.LogInfo(Time.time + " " + (isHost ? "host" : "client") + "Obj placed:" + obj.transform.parent.name + " sync" + obj.NetworkObject.AutoObjectParentSync + " " + obj.name);

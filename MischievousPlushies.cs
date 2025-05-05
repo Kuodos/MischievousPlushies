@@ -19,7 +19,7 @@ public class MischievousPlushies : BaseUnityPlugin
 {
     public const string GUID = "Kuodos.MischievousPlushies";
     public const string NAME = "MischievousPlushies";
-    public const string VERSION = "0.5.0";
+    public const string VERSION = "0.5.1";
     private static AssetBundle plushieAssets { get; set; } = null!;
     public static GameObject networkerPrefab { get; set; } = null!;
     public static MischievousPlushies Instance { get; private set; } = null!;
@@ -61,6 +61,9 @@ public class MischievousPlushies : BaseUnityPlugin
     }
     public static void LogInfo(string text){
         if(PlushConfig.logAll.Value) Logger.LogInfo(text);
+    }
+    public static void LogError(string text){
+        if(PlushConfig.logAll.Value) Logger.LogError(text);
     }
     internal static void Unpatch()
     {

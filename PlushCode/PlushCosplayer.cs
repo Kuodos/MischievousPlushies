@@ -42,7 +42,13 @@ namespace MischievousPlushies.PlushCode
             {
                 ConvertedPlushies.Add(NetworkManager.Singleton.SpawnManager.SpawnedObjects[id].transform.GetComponent<GrabbableObject>());
             }
-            FindAnyObjectByType<PlushCosplayer>().MassConvert();
+            PlushCosplayer[] plushies = FindObjectsByType<PlushCosplayer>(sortMode: FindObjectsSortMode.None);
+            foreach (PlushCosplayer plush in plushies){
+                if(plush.GetComponent<MeshFilter>() != null){
+                    FindAnyObjectByType<PlushCosplayer>().MassConvert();
+                    break;
+                }
+            }            
         }
         public void MassConvert()
         {
@@ -119,7 +125,7 @@ namespace MischievousPlushies.PlushCode
 
         public void PlushConvert(GrabbableObject obj)
         {
-            if (obj.GetComponentInChildren<SkinnedMeshRenderer>() != null && obj.itemProperties.itemName.ToLower().Contains("kuodos"))
+            if (obj.GetComponentInChildren<SkinnedMeshRenderer>() != null && obj.itemProperties.itemName.ToLower().Contains("carrierplush"))
             {
                 obj.GetComponentInChildren<SkinnedMeshRenderer>().materials = PlushObj.GetComponent<MeshRenderer>().materials;
             }
@@ -132,6 +138,10 @@ namespace MischievousPlushies.PlushCode
                 }
                 else
                 {
+                    if(obj.GetComponent<MeshFilter>() == null){
+                        MischievousPlushies.LogError(obj.name + "Convert failed - no MeshFilter");
+                        return;
+                    }
                     filter = obj.GetComponent<MeshFilter>();
                 }
                 float sizeObj = filter.mesh.bounds.size.y * filter.transform.lossyScale.y;
