@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -63,7 +59,7 @@ namespace MischievousPlushies.PlushCode
             Vector3 newpos;
             transform.position=target;
             StopPathing();
-            newpos=RoundManager.Instance.GetNavMeshPosition(target, RoundManager.Instance.navHit, 2f, NavMesh.AllAreas);
+            newpos=RoundManager.Instance.GetNavMeshPosition(target, RoundManager.Instance.navHit, 1f, NavMesh.AllAreas);
             agent.Warp(newpos);
             SetObjectPosition();
             obj.isInFactory = (agent.nextPosition.y<-80); //should work?
@@ -82,7 +78,7 @@ namespace MischievousPlushies.PlushCode
         public void StopPathing()
         {
             stopPathing = true;
-            agent.ResetPath();
+            if(agent.hasPath) agent.ResetPath();
         }
         private void LateUpdate()
         {

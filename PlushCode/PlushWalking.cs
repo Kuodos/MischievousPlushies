@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using GameNetcodeStuff;
 using UnityEngine;
 
@@ -29,7 +25,7 @@ namespace MischievousPlushies.PlushCode
             miniObj = GetComponentInChildren<MinifyingObjectSurface>();
 
             agent = gameObject.AddComponent<GrabbableNavMeshAgent>();
-            agent.Init(plushSpeed, 0.0f, true, 1f);
+            agent.Init(plushSpeed, 0.05f, true, 1f);
             agent.StopPathing();
 
             miniObj.onItemStored.AddListener(OnItemStored);
@@ -93,7 +89,7 @@ namespace MischievousPlushies.PlushCode
             }
             if (dist < 3f)
             {
-                AnimatorSetBoolSyncedSendRPC("isRunning", false);
+                if(anim.GetBool("isRunning")==true) AnimatorSetBoolSyncedSendRPC("isRunning", false);
             }
             if (CheckAnimTimer < 0)
             {

@@ -1,6 +1,7 @@
 # MischievousPlushies
-Lethal Company mod that adds 6 plushies with unique abilities (currently 5).  \
+Lethal Company mod that adds 6 plushies with unique abilities.  \
 WIP \
+0.6 - 1 new ability, fixes, updated to v72
 0.5.1 - fixes \
 0.5 - 1 new ability \
 0.4 - Added basic config, 1 new ability \
@@ -13,7 +14,8 @@ WIP \
 - Bearded plushie will follow you if you give him a one-handed item 
 - Pink plushie will make other plushies look like it (including plushies and fumos from other mods) 
 - Duck plushie will teleport AFK players if you have an inverse teleporter and nobody is there to witness his crime 
-- Pumpkin plushie will attract beehives to himself 
+- Pumpkin plushie will attract beehives to himself
+- Cyborg plushie is a wind-up toy with a shovel, once wound he will hit first thing it sees
 </details>
 
 ## Credits

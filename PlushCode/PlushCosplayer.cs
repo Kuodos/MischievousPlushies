@@ -116,7 +116,7 @@ namespace MischievousPlushies.PlushCode
                         ConvertedPlushies.Add(plush);
                         PlushiesList.Remove(plush);
                         ulong targetID = plush.NetworkObjectId;
-                        MischievousPlushies.LogInfo(targetID + "converted");
+                        MischievousPlushies.LogInfo(targetID + " converted");
                         PlushNetworker.Instance.CosplayClientRPC(PlushObj.NetworkObjectId, targetID);
                     }
                 }
@@ -125,8 +125,10 @@ namespace MischievousPlushies.PlushCode
 
         public void PlushConvert(GrabbableObject obj)
         {
-            if (obj.GetComponentInChildren<SkinnedMeshRenderer>() != null && obj.itemProperties.itemName.ToLower().Contains("carrierplush"))
+            MischievousPlushies.LogInfo("conv" + obj.itemProperties.itemName);
+            if (obj.GetComponentInChildren<SkinnedMeshRenderer>() != null && (obj.itemProperties.itemName.ToLower().Contains("bearded plush")||obj.itemProperties.itemName.ToLower().Contains("cyborg plush")))
             {
+                MischievousPlushies.LogInfo("who up");
                 obj.GetComponentInChildren<SkinnedMeshRenderer>().materials = PlushObj.GetComponent<MeshRenderer>().materials;
             }
             else
@@ -139,7 +141,7 @@ namespace MischievousPlushies.PlushCode
                 else
                 {
                     if(obj.GetComponent<MeshFilter>() == null){
-                        MischievousPlushies.LogError(obj.name + "Convert failed - no MeshFilter");
+                        MischievousPlushies.LogInfo(obj.name + "Convert failed - no MeshFilter");
                         return;
                     }
                     filter = obj.GetComponent<MeshFilter>();

@@ -1,9 +1,5 @@
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
-using Unity.AI.Navigation;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -18,7 +14,6 @@ namespace MischievousPlushies.PlushCode
         private static List<GrabbableObject> Hives = new();
         private float beeMagnetTimer = 10f;
         private static float beeMagnetTimerMax = 10f, beeMagnetStopRadius = 1f, beeMagnetShipStopRadius=3f, beeMagnetSpeed = 0.5f;
-        //todo: check ship bounds instead of radius
         private static Vector3 shipCenter;
         private void Awake()
         {

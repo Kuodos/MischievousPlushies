@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.IO;
 using System.Diagnostics;
 using UnityEngine;
@@ -13,13 +9,15 @@ namespace MischievousPlushies.PlushCode
     {
         private static string recordings;
         public AudioClip defaultNoise;
-        public UnityEvent onGrabEvent = new UnityEvent(), onDiscardEvent = new UnityEvent();
+        public UnityEvent onGrabEvent = new UnityEvent(), onDiscardEvent = new UnityEvent(), onItemActivateEvent = new UnityEvent();
+
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
             //todo play random voice recording on use if Mirage is installed
             recordings ??= Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName)+"\\Recordings\\"; 
             onGrabEvent ??= new UnityEvent();
+            onItemActivateEvent ??= new UnityEvent();
             if(GetComponent<PlushLifeboundExploder>()) GetComponent<PlushLifeboundExploder>().Init();
             
         }
@@ -38,7 +36,7 @@ namespace MischievousPlushies.PlushCode
         public override void ItemActivate(bool used, bool buttonDown = true)
         {
             base.ItemActivate(used, buttonDown);
-            
+            onItemActivateEvent?.Invoke();
         }
         public override void OnDestroy()
         {

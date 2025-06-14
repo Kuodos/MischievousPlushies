@@ -1,13 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using GameNetcodeStuff;
-using HarmonyLib;
 using MischievousPlushies.PlushCode;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Animations.Rigging;
 
 namespace MischievousPlushies
 {
@@ -96,7 +92,7 @@ namespace MischievousPlushies
                 List<ulong> targets = new List<ulong>();
                 foreach (PlayerControllerB plr in StartOfRound.Instance.allPlayerScripts)
                 {
-                    MischievousPlushies.LogInfo("added "+plr.actualClientId);
+                    MischievousPlushies.LogInfo("ClienID added "+plr.actualClientId);
                     targets.Add(plr.actualClientId);
                 }
                 targets=targets.Distinct().ToList();
@@ -123,7 +119,21 @@ namespace MischievousPlushies
             
             StartCoroutine(src.PlaceObject(playerobj, grabbable));
         }
-
+        [ClientRpc]
+        public void WindupShovelClientRPC(ulong source)
+        {
+            PlushShovelWindup plush = NetworkManager.Singleton.SpawnManager.SpawnedObjects[source].GetComponent<PlushShovelWindup>();
+            plush.WindupShovel();
+        }
+        [ClientRpc]
+        public void WindupShovelHitClientRPC(ulong source, ulong target)
+        {   
+            IHittable hittable = NetworkManager.Singleton.SpawnManager.SpawnedObjects[target].GetComponentInChildren<IHittable>();
+            PlushShovelWindup plush = NetworkManager.Singleton.SpawnManager.SpawnedObjects[source].GetComponent<PlushShovelWindup>();
+            
+            MischievousPlushies.LogInfo(plush.gameObject.name + " hits " + hittable.ToString());
+            plush.StartAttackSequence(hittable);
+        }
         [ClientRpc]
         public void UpdateBeeHivesClientRPC()
         {

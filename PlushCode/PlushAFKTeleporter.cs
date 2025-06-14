@@ -1,9 +1,6 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using BepInEx.Logging;
 using GameNetcodeStuff;
 using UnityEngine;
 
@@ -24,7 +21,7 @@ namespace MischievousPlushies.PlushCode
         private static List<PlayerControllerB> AfkPlayers { get; set; } = null!;
         private static bool teleporting = false, setup = false;
 
-        private void Awake()
+        private void Start()
         {
             plushObj = GetComponent<GrabbableObject>();
             if (isHost && !setup)

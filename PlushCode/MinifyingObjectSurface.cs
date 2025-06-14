@@ -76,10 +76,7 @@ namespace MischievousPlushies.PlushCode
             objectHeld.isInShipRoom = StartOfRound.Instance.shipInnerRoomBounds.bounds.Contains(objectHeld.transform.position);
             objectHeld.isInElevator = objectHeld.isInShipRoom;
 
-            if(objectHeld.isInShipRoom){
-                objectHeld.transform.SetParent(StartOfRound.Instance.elevatorTransform);
-                objectHeld.targetFloorPosition = objectHeld.transform.parent.InverseTransformPoint(objectHeld.transform.position);
-            }
+            
 
             if (!objectHeld.isHeld) //plush was picked up or end of round
             {
@@ -89,6 +86,11 @@ namespace MischievousPlushies.PlushCode
                 objectHeld.PlayDropSFX();
             }
 
+            if(objectHeld.isInShipRoom){
+                objectHeld.transform.SetParent(StartOfRound.Instance.elevatorTransform);
+                objectHeld.targetFloorPosition = objectHeld.transform.parent.InverseTransformPoint(objectHeld.transform.position);
+            }
+            
             onItemDiscarded.Invoke();
             objectHeld.transform.localScale = objectHeld.originalScale;
             objectHeld.NetworkObject.AutoObjectParentSync = prevParentSync;
@@ -130,6 +132,7 @@ namespace MischievousPlushies.PlushCode
                 matchedRot.y = obj.itemProperties.floorYOffset;
                 if (obj.name.ToLower().Contains("flashlight")) matchedRot.y = 90;
                 if (obj.name.ToLower().Contains("plush")) matchedRot.y -= 90;
+                if (obj.name.ToLower().Contains("shovelplush")) matchedRot.y+=180;
                 objectHeld.transform.localRotation = Quaternion.Euler(matchedRot);
             }
             MischievousPlushies.LogInfo(Time.time + " " + (isHost ? "host" : "client") + "Obj placed:" + obj.transform.parent.name + " sync" + obj.NetworkObject.AutoObjectParentSync + " " + obj.name);
